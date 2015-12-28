@@ -24,11 +24,10 @@ class StopMonitor(object):
     self.stop_id = stop_id
     self.route = route
     self.max_visits = max_visits
-    # TODO what if the request throws an exception?
-    self.visits = self.stop_monitoring_request()
+    self.visits = []
+    self.error = None
     self.name = self.visits[0].monitored_stop if len(self.visits) > 0 else None
 
-  def stop_monitoring_request(self):
     # TODO define num_visits globally (or per instance of this class)
     params = {
       'key': self.api_key,
@@ -42,17 +41,23 @@ class StopMonitor(object):
 
     response = requests.get(STOP_MONITORING_ENDPOINT, params=params)
     rsp = response.json()
-    parsed_visits = []
 
     try:
-      visits_json = rsp['Siri']['ServiceDelivery']['StopMonitoringDelivery'][0]['MonitoredStopVisit']
+      delivery = rsp['Siri']['ServiceDelivery']['StopMonitoringDelivery'][0]
 
-      for raw_visit in visits_json:
-        parsed_visits.append(Visit(raw_visit))
+      if 'ErrorCondition' in delivery:
+        self.error = delivery['ErrorCondition']['Description']
+      else:
+        raw_visits = delivery['MonitoredStopVisit']
+        visits = []
+
+        for raw_visit in raw_visits:
+          visits.append(Visit(raw_visit))
+
+        self.visits = visits
+
     except KeyError:
-      parsed_visits = 'No results were returned'
-
-    return parsed_visits
+      self.error = 'The BusTime API response was invalid'
 
   def __str__(self):
     output = []
@@ -65,8 +70,10 @@ class StopMonitor(object):
     return '\n'.join(output)
 
   def json(self):
-    return jsonpickle.encode(self.visits)
-
+    if self.error:
+      return self.error
+    else:
+      return jsonpickle.encode(self.visits)
 
 class Visit(object):
 
