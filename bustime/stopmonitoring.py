@@ -19,10 +19,10 @@ FEET_PER_MILE = 5280
 
 class StopMonitor(object):
 
-  def __init__(self, api_key, stop_id, line=None, max_visits=3):
+  def __init__(self, api_key, stop_id, route=None, max_visits=3):
     self.api_key = api_key
     self.stop_id = stop_id
-    self.line = line
+    self.route = route
     self.max_visits = max_visits
     # TODO what if the request throws an exception?
     self.visits = self.stop_monitoring_request()
@@ -37,8 +37,8 @@ class StopMonitor(object):
       'MaximumStopVisits': self.max_visits,
     }
 
-    if self.line:
-      params['LineRef'] = "MTA NYCT_%s" % self.line
+    if self.route:
+      params['LineRef'] = "MTA NYCT_%s" % self.route
 
     response = requests.get(STOP_MONITORING_ENDPOINT, params=params)
     rsp = response.json()
