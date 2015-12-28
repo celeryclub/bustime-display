@@ -22,7 +22,6 @@ class StopMonitor(object):
   def __init__(self, api_key, stop_id, line=None, max_visits=3):
     self.api_key = api_key
     self.stop_id = stop_id
-    # TODO support null line name (to match on any line)
     self.line = line
     self.max_visits = max_visits
     # TODO what if the request throws an exception?
@@ -31,15 +30,16 @@ class StopMonitor(object):
 
   def bustime_request_json(self):
     # TODO define num_visits globally (or per instance of this class)
-    line_id = "MTA NYCT_%s" % self.line
-    # TODO populate these better to account for null values (see self.line above)
     blob = {
       'key': self.api_key,
-      'OperatorRef': "MTA",
+      'OperatorRef': 'MTA',
       'MonitoringRef': self.stop_id,
-      'LineRef': line_id,
       'MaximumStopVisits': self.max_visits,
-      }
+    }
+
+    if self.line:
+      blob['LineRef'] = "MTA NYCT_%s" % self.line
+
     return blob
 
   def stop_monitoring_request(self):
