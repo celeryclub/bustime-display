@@ -38,7 +38,7 @@ class StopMonitor(object):
     }
 
     if self.route:
-      params['LineRef'] = "MTA NYCT_%s" % self.route
+      params['LineRef'] = "MTA NYCT_%s" % self.route.upper()
 
     response = requests.get(STOP_MONITORING_ENDPOINT, params=params)
     rsp = response.json()
