@@ -28,9 +28,9 @@ class StopMonitor(object):
     self.visits = self.stop_monitoring_request()
     self.name = self.visits[0].monitored_stop if len(self.visits) > 0 else None
 
-  def bustime_request_json(self):
+  def stop_monitoring_request(self):
     # TODO define num_visits globally (or per instance of this class)
-    blob = {
+    params = {
       'key': self.api_key,
       'OperatorRef': 'MTA',
       'MonitoringRef': self.stop_id,
@@ -38,21 +38,20 @@ class StopMonitor(object):
     }
 
     if self.line:
-      blob['LineRef'] = "MTA NYCT_%s" % self.line
+      params['LineRef'] = "MTA NYCT_%s" % self.line
 
-    return blob
-
-  def stop_monitoring_request(self):
-    payload = self.bustime_request_json()
-    response = requests.get(STOP_MONITORING_ENDPOINT, params=payload)
-    return self.parse_bustime_response(response.json())
-
-  def parse_bustime_response(self, rsp):
-    # self.updated_at
+    response = requests.get(STOP_MONITORING_ENDPOINT, params=params)
+    rsp = response.json()
     parsed_visits = []
-    visits_json = rsp['Siri']['ServiceDelivery']['StopMonitoringDelivery'][0]['MonitoredStopVisit']
-    for raw_visit in visits_json:
-      parsed_visits.append(Visit(raw_visit))
+
+    try:
+      visits_json = rsp['Siri']['ServiceDelivery']['StopMonitoringDelivery'][0]['MonitoredStopVisit']
+
+      for raw_visit in visits_json:
+        parsed_visits.append(Visit(raw_visit))
+    except KeyError:
+      parsed_visits = 'No results were returned'
+
     return parsed_visits
 
   def __str__(self):
